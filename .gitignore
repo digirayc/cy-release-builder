@@ -1,0 +1,13 @@
+gitian-builder/
+releases/
+secrets/
+gitian.sigs.cy/
+cyberyen-detached-sigs/
+cyberyen-binaries/
+*.tar.gz
+*.exe
+*.dmg
+*.p12
+
+# Mac specific
+.DS_Store
