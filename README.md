@@ -1,8 +1,9 @@
 # cy-release-builder
 
-fork of David Burkett reference [ltc-release-builder](https://github.com/DavidBurkett/ltc-release-builder).
+*fork of David Burkett reference [ltc-release-builder](https://github.com/DavidBurkett/ltc-release-builder).
 
-cy-release-builder is an updated gitian builder script for building Cyberyen Core 0.21.x. 
+
+cy-release-builder is an updated gitian builder script for building Cyberyen Core 0.21.x.
 It includes additional features and bugfixes not present in the original gitian-builder script.
 
 We reccomend building with docker mode, please see [the Docker installation website](https://docs.docker.com/engine/install/)
@@ -13,7 +14,7 @@ for appropriate Docker Desktop for your computer. When building, please make sur
 Replace USERNAME & version number. The version number should be the same as the tag, but without the `v` prefix.
 
 ```bash
-$ git clone https://github.com/DavidBurkett/cy-release-builder.git
+$ git clone https://github.com/digirayc/cy-release-builder.git
 $ cd cy-release-builder
 $ ./build-release.py --docker --setup USERNAME 0.21.x --disable-apt-cacher
 ```
