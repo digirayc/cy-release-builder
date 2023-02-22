@@ -24,7 +24,7 @@ packages:
 - "ca-certificates"
 - "python3"
 remotes:
-- "url": "https://github.com/cyberyen-project/cyberyen.git"
+- "url": "https://github.com/cyberyen/cyberyen.git"
   "dir": "cyberyen"
 files: []
 script: |

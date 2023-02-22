@@ -31,7 +31,7 @@ packages:
 - "fonts-tuffy"
 - "xorriso"
 remotes:
-- "url": "https://github.com/cyberyen-project/cyberyen.git"
+- "url": "https://github.com/cyberyen/cyberyen.git"
   "dir": "cyberyen"
 files:
 - "Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers.tar.gz"
@@ -149,12 +149,12 @@ script: |
     cd installed
     find . -name "lib*.la" -delete
     find . -name "lib*.a" -delete
-    
+
     # Cyberyen: Delete libbitcoin from binary distribution for now, see #192
     rm -rf ${DISTNAME:?}/lib/
     rm -rf ${DISTNAME}/include/
     # Cyberyen: ends
-    
+
     rm -rf ${DISTNAME}/lib/pkgconfig
     find ${DISTNAME} | sort | tar --mtime="$REFERENCE_DATETIME" --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ${OUTDIR}/${DISTNAME}-${i}.tar.gz
     cd ../../
