@@ -94,10 +94,7 @@ script: |
   create_per-host_faketime_wrappers "2000-01-01 12:00:00"
   export PATH=${WRAP_DIR}:${PATH}
 
-  chmod 775 -R ./cyberyen
-  chmod 764  ./cyberyen/depends/config.guess
-  chmod 764  ./cyberyen/depends/config.sub
-
+  chmod -R 0775 .
   cd cyberyen
   BASEPREFIX="${PWD}/depends"
   # Build dependencies for each host

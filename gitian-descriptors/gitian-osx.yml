@@ -88,6 +88,7 @@ script: |
   create_per-host_faketime_wrappers "2000-01-01 12:00:00"
   export PATH=${WRAP_DIR}:${PATH}
 
+  chmod -R 0775 .
   cd cyberyen
   BASEPREFIX="${PWD}/depends"
 
@@ -125,6 +126,7 @@ script: |
     mkdir -p ${INSTALLPATH}
     tar --strip-components=1 -xf "${GIT_ARCHIVE}"
 
+    chmod -R 0775 .
     ./autogen.sh
     CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS}
     make ${MAKEOPTS}

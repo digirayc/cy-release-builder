@@ -32,6 +32,7 @@ script: |
   tar xf osslsigncode-2.0.tar.gz
   cd osslsigncode-2.0
 
+  chmod -R 0775 .
   ./autogen.sh
   ./configure --without-gsf --without-curl --disable-dependency-tracking
   make
