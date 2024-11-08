@@ -30,16 +30,16 @@ def parse_args():
     parser.add_argument('signer', nargs='?', help='GPG signer to sign each build assert file')
     parser.add_argument('version', nargs='?', help='Version number, commit, or branch to build. If building a commit or branch, the -c option must be specified')
     args = parser.parse_args()
-    
+
     if args.commit and args.pull:
         raise Exception('Error: cannot have both commit and pull')
 
     if args.kvm and args.docker:
         raise Exception('Error: cannot have both kvm and docker')
-    
+
     # Add leading 'v' for tags
     args.commit = ('' if args.commit else 'v') + args.version
-    
+
     # Set build & sign if buildsign
     if args.buildsign:
         args.build = True
@@ -52,7 +52,7 @@ def parse_args():
 
     args.sign_prog = 'true' if args.detach_sign else 'gpg --batch --yes --detach-sign'
     args.is_bionic = b'bionic' in subprocess.check_output(['lsb_release', '-cs'])
-    
+
     script_name = os.path.basename(sys.argv[0])
     if not args.signer:
         print(script_name+': Missing signer')
@@ -62,7 +62,7 @@ def parse_args():
         print(script_name+': Missing version')
         print('Try '+script_name+' --help for more information')
         sys.exit(1)
-        
+
     return args
 
 def setup():
@@ -93,7 +93,7 @@ def setup():
         if args.disable_apt_cacher:
             os.chdir(os.path.join(workdir, 'gitian-builder'))
             subprocess.check_call(['git', 'am', '../0001-Disable-apt-cacher.patch'])
-        
+
     # Make Gitian VM
     os.chdir(os.path.join(workdir, 'gitian-builder'))
     make_image_prog = ['bin/make-base-vm', '--suite', 'bionic', '--arch', 'amd64']
@@ -103,19 +103,19 @@ def setup():
         make_image_prog += ['--lxc']
     subprocess.check_call(make_image_prog)
     os.chdir(workdir)
-    
+
     if args.is_bionic and not args.kvm and not args.docker:
         subprocess.check_call(['sudo', 'sed', '-i', 's/lxcbr0/br0/', '/etc/default/lxc-net'])
         print('Reboot is required')
         sys.exit(0)
 
     # Download Mac SDK
-    MAC_SDK = 'Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers.tar.gz'
+    MAC_SDK = 'Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz'
     os.chdir(os.path.join(workdir, 'gitian-builder'))
     os.makedirs('inputs', exist_ok=True)
     if args.macos and not os.path.isfile('inputs/{}'.format(MAC_SDK)):
         subprocess.check_call(['wget', '-O', 'inputs/{}'.format(MAC_SDK), 'https://bitcoincore.org/depends-sources/sdks/{}'.format(MAC_SDK)])
-        subprocess.check_call(["echo '436df6dfc7073365d12f8ef6c1fdb060777c720602cc67c2dcf9a59d94290e38 inputs/{}' | sha256sum -c".format(MAC_SDK)], shell=True)
+        subprocess.check_call(["echo 'be17f48fd0b08fb4dcd229f55a6ae48d9f781d210839b4ea313ef17dd12d6ea5 inputs/{}' | sha256sum -c".format(MAC_SDK)], shell=True)
 
     # Download osslsigncode-2.0
     subprocess.check_call(['wget', '-O', 'inputs/osslsigncode-2.0.tar.gz', 'https://github.com/mtrojnar/osslsigncode/archive/2.0.tar.gz'])
@@ -161,24 +161,24 @@ def build():
 def codesign():
     # Set GPG Passphrase
     preset_gpg_passphrase()
-    
+
     if args.windows:
         print('\nCode-signing ' + args.version + ' Windows')
-        
+
         os.chdir(workdir)
         os.makedirs(os.path.join(workdir, 'signing', args.version, 'unsigned'), exist_ok=True)
         subprocess.check_call('cp ./cyberyen-binaries/'+args.version+'/*-unsigned.exe ./signing/'+args.version+'/unsigned/', shell=True)
         subprocess.check_call('cp ./maintainer/win-codesign* ./signing/'+args.version+'/', shell=True)
-        
+
         os.chdir(os.path.join(workdir, 'signing', args.version))
         subprocess.check_call('./win-codesign-create.sh -pkcs12 ../../secrets/windows.p12 -readpass ../../secrets/windows.p12.pass.txt', shell=True)
-        
+
         os.chdir(os.path.join(workdir, 'cyberyen-detached-sigs'))
         subprocess.check_call(['git', 'checkout', '-B', args.version])
         subprocess.check_call(['rm', '-rf', '*'])
         subprocess.check_call(['tar', 'xf', '../signing/'+args.version+'/signature-win.tar.gz'])
         subprocess.check_call(['git', 'add', '-A'])
-        
+
     if args.commit_files:
         os.chdir(os.path.join(workdir, 'cyberyen-detached-sigs'))
         subprocess.check_call(['git', 'commit', '-m', 'point to '+args.version])
@@ -188,10 +188,10 @@ def codesign():
 def sign():
     global args, workdir
     os.chdir(os.path.join(workdir, 'gitian-builder'))
-    
+
     # Set GPG Passphrase
     preset_gpg_passphrase()
-    
+
     if args.windows:
         print('\nSigning ' + args.version + ' Windows')
         subprocess.check_call('cp inputs/cyberyen-' + args.version + '-win-unsigned.tar.gz inputs/cyberyen-win-unsigned.tar.gz', shell=True)
@@ -216,10 +216,10 @@ def sign():
 def verify():
     global args, workdir
     rc = 0
-    
+
     os.chdir(os.path.join(workdir, 'gitian.sigs.cy'))
     subprocess.check_call(['git', 'pull'])
-    
+
     os.chdir(os.path.join(workdir, 'gitian-builder'))
 
     print('\nVerifying v'+args.version+' Linux\n')
@@ -252,47 +252,47 @@ def verify():
 def package():
     global args, workdir
     rc = 0
-    
+
     release_dir = os.path.join(workdir, 'cyberyen-binaries', args.version)
     os.chdir(release_dir)
-    
+
     # Set GPG Passphrase
     preset_gpg_passphrase()
-    
+
     print('\nSigning and packaging release\n')
-    
+
     # Move relevant files to release directory
     subprocess.check_call('mkdir -p debug && mv ./*-debug* ./debug', shell=True)
     subprocess.check_call('mkdir -p unsigned && mv ./*-unsigned* ./unsigned', shell=True)
     subprocess.check_call('mkdir -p release && find . -maxdepth 1 -type f | xargs mv -t ./release', shell=True)
     os.chdir(os.path.join(release_dir, 'release'))
-    
+
     # Generate SHA256SUMS.asc
     subprocess.check_call('sha256sum * > SHA256SUMS && gpg --digest-algo sha256 --clearsign SHA256SUMS && rm ./SHA256SUMS', shell=True)
-    
+
     # Move to linux, osx, src, and win folders
     subprocess.check_call('mkdir -p src && mv ./cyberyen-' + args.version + '.tar.gz ./src', shell=True)
     subprocess.check_call('mkdir -p linux && mv ./*-linux* ./linux', shell=True)
     subprocess.check_call('mkdir -p osx && mv ./*-osx* ./osx', shell=True)
     subprocess.check_call('mkdir -p win && mv ./*-win* ./win', shell=True)
-    
+
     # Sign binaries
     subprocess.check_call('for f in ./*/*; do if [ ! -d "$f" ]; then gpg --digest-algo sha256 --armor --detach-sign $f; fi done', shell=True)
-    
+
 def preset_gpg_passphrase():
     global args
-    
+
     subprocess.call(['gpgconf', '--kill', 'gpg-agent'])
     subprocess.check_call(['gpg-agent', '--daemon', '--allow-preset-passphrase'])
-    
+
     keygrips = subprocess.run("gpg --fingerprint --with-keygrip {} | awk '/Keygrip/ {{ print $3}}'".format(args.signer), shell=True, text=True, stdout=subprocess.PIPE).stdout.splitlines()
-    
+
     for keygrip in keygrips:
         subprocess.check_call('echo "{0}"  | /usr/lib/gnupg/gpg-preset-passphrase --preset {1}'.format(args.gpg_password, keygrip), shell=True)
-    
+
 def main():
     global args, workdir
-    
+
     args = parse_args()
     workdir = os.getcwd()
 
@@ -309,7 +309,7 @@ def main():
             os.environ['GITIAN_HOST_IP'] = '10.0.3.1'
         if 'LXC_GUEST_IP' not in os.environ.keys():
             os.environ['LXC_GUEST_IP'] = '10.0.3.5'
-    
+
     if (args.build or args.sign or args.codesign or args.package) and len(args.gpg_password) == 0:
         args.gpg_password = getpass.getpass("GPG Password: ") # TODO: First check if key is actually password protected
 
@@ -324,7 +324,7 @@ def main():
         subprocess.check_call(['git', 'fetch', args.url, 'refs/pull/'+args.version+'/merge'])
         args.commit = subprocess.check_output(['git', 'show', '-s', '--format=%H', 'FETCH_HEAD'], universal_newlines=True, encoding='utf8').strip()
         args.version = 'pull-' + args.version
-    
+
     print('args.commit=' + args.commit)
     print('args.version=' + args.version)
 
@@ -343,7 +343,7 @@ def main():
 
     if args.verify:
         sys.exit(verify())
-        
+
     if args.package:
         package()
 
