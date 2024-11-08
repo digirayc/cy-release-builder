@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument('version', nargs='?', help='Version number, commit, or branch to build. If building a commit or branch, the -c option must be specified')
     args = parser.parse_args()
 
+    args.gpg_configured = False
     if args.commit and args.pull:
         raise Exception('Error: cannot have both commit and pull')
 
@@ -279,16 +280,36 @@ def package():
     # Sign binaries
     subprocess.check_call('for f in ./*/*; do if [ ! -d "$f" ]; then gpg --digest-algo sha256 --armor --detach-sign $f; fi done', shell=True)
 
+
+def update_gpg_agent_conf():
+    config_path = os.path.expanduser('~/.gnupg/gpg-agent.conf')
+    with open(config_path, 'a') as config_file:
+        config_file.write('\ndefault-cache-ttl 3600\n')
+        config_file.write('max-cache-ttl 86400\n')
+        config_file.write('allow-preset-passphrase\n')
+
+
 def preset_gpg_passphrase():
     global args
 
-    subprocess.call(['gpgconf', '--kill', 'gpg-agent'])
-    subprocess.check_call(['gpg-agent', '--daemon', '--allow-preset-passphrase'])
+    if args.gpg_configured:
+        return
 
-    keygrips = subprocess.run("gpg --fingerprint --with-keygrip {} | awk '/Keygrip/ {{ print $3}}'".format(args.signer), shell=True, text=True, stdout=subprocess.PIPE).stdout.splitlines()
+    update_gpg_agent_conf()
 
+    # Reload gpg-agent configuration without killing it
+    subprocess.call(['gpg-connect-agent', 'reloadagent', '/bye'])
+
+    # Extract keygrips
+    gpg_output = subprocess.run(f"gpg --fingerprint --with-keygrip {args.signer}", shell=True, text=True, stdout=subprocess.PIPE).stdout
+    keygrips = [line.split('=')[1].strip() for line in gpg_output.splitlines() if 'Keygrip' in line]
+
+    # Preset the passphrase
     for keygrip in keygrips:
-        subprocess.check_call('echo "{0}"  | /usr/lib/gnupg/gpg-preset-passphrase --preset {1}'.format(args.gpg_password, keygrip), shell=True)
+        cmd = f'echo "{args.gpg_password}" | /usr/lib/gnupg/gpg-preset-passphrase --preset {keygrip}'
+        subprocess.check_call(cmd, shell=True)
+
+    args.gpg_configured = True
 
 def main():
     global args, workdir
@@ -346,8 +367,6 @@ def main():
 
     if args.package:
         package()
-
-    print('\nDONE\n')
 
 if __name__ == '__main__':
     main()
