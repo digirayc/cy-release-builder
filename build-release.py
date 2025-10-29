@@ -90,7 +90,7 @@ def setup():
     if not os.path.isdir('cyberyen-detached-sigs'):
         subprocess.check_call(['git', 'clone', 'https://github.com/cyberyen/cyberyen-detached-sigs.git'])
     if not os.path.isdir('gitian-builder'):
-        subprocess.check_call(['git', 'clone', 'https://github.com/devrandom/gitian-builder.git'])
+        subprocess.check_call(['git', 'clone', 'https://github.com/digirayc/gitian-builder.git'])
         if args.disable_apt_cacher:
             os.chdir(os.path.join(workdir, 'gitian-builder'))
             subprocess.check_call(['git', 'am', '../0001-Disable-apt-cacher.patch'])
